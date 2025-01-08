@@ -1,0 +1,19 @@
+Vagrant.configure(2) do |config|
+
+  # General Libvirt Connection
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.host = "localhost"
+    libvirt.uri = 'qemu+unix:///system'
+    libvirt.driver = 'kvm'
+    libvirt.memory = '4096'
+    libvirt.cpus = '2'
+  end
+
+  config.vm.define "k3s" do |k3s|
+    k3s.vm.box = "generic/rocky9"
+    k3s.vm.hostname = "k3s.example.com"
+    k3s.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbook.yml"
+    end
+  end
+end

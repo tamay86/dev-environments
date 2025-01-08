@@ -1,0 +1,9 @@
+machine:
+  network:
+    hostname: cp-01
+    interfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: true
+        vip:
+          ip: 192.168.100.10

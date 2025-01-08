@@ -1,0 +1,43 @@
+[Unit]
+Description=Docker Mailserver
+
+[Container]
+ContainerName=mailserver
+Image=docker-mailserver.image
+Network=mailserver.network
+AutoUpdate=registry
+HostName=mailserver.example.com
+PublishPort=25:25
+PublishPort=143:143
+PublishPort=465:465
+PublishPort=587:587
+PublishPort=993:993
+
+# Volumes
+Volume=mailserver-config.volume:/tmp/docker-mailserver/
+Volume=mailserver-data.volume:/var/mail/
+Volume=mailserver-state.volume:/var/mail-state/
+Volume=mailserver-logs.volume:/var/log/mail/
+
+# Environment
+EnvironmentFile=/opt/mailserver/mailserver.env
+
+# Secrets
+# Secret=netbox_redis_password,target=/run/secrets/redis_password
+
+# Labels
+Label=app=mailserver
+
+# Healthcheck
+HealthCmd=CMD-SHELL ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1
+HealthOnFailure=kill
+HealthStartPeriod=2m
+HealthInterval=15s
+HealthRetries=3
+HealthTimeout=30s
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target

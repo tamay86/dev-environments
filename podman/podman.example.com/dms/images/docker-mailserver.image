@@ -1,0 +1,5 @@
+[Unit]
+Description=docker-mailserver Image
+
+[Image]
+Image=ghcr.io/docker-mailserver/docker-mailserver:latest

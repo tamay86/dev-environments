@@ -1,0 +1,9 @@
+machine:
+  network:
+    hostname: k8s-node-01
+    interfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: true
+        vip:
+          ip: fd00::10

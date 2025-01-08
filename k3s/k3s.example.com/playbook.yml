@@ -1,0 +1,162 @@
+---
+
+- name: Install k3s
+  hosts: all
+  remote_user: vagrant
+  become: true
+
+  vars:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+
+  tasks:
+    - name: Get packages
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Install packages
+      ansible.builtin.package:
+        state: present
+        name:
+          - bash-completion
+          - python3-kubernetes
+          - nfs-utils
+          - git
+
+    - name: Configure firewalld
+      when: "'firewalld' in ansible_facts.packages"
+      block:
+
+      - name: Open 6443/tcp in firewalld
+        ansible.posix.firewalld:
+          state: enabled
+          port: 6443/tcp
+          permanent: true
+          immediate: true
+  
+      - name: Add 10.42.0.0/16 as trusted source in firewalld
+        ansible.posix.firewalld:
+          zone: trusted
+          source: 10.42.0.0/16
+          permanent: true
+          immediate: true
+          state: enabled
+
+      - name: Add 10.43.0.0/16 as trusted source in firewalld
+        ansible.posix.firewalld:
+          zone: trusted
+          source: 10.43.0.0/16
+          permanent: true
+          immediate: true
+          state: enabled
+
+    - name: Create /etc/rancher/k3s/config.yaml.d
+      ansible.builtin.file:
+        path: /etc/rancher/k3s/config.yaml.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Copy config.yaml
+      ansible.builtin.copy:
+        src: config.yaml
+        dest: /etc/rancher/k3s/config.yaml.d/k3s-config.yaml
+        owner: root
+        group: root
+        mode: "0640"
+
+    - name: Get k3s installer
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: /tmp/k3s.sh
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: Install k3s
+      ansible.builtin.command: /tmp/k3s.sh
+      args:
+        creates: /etc/rancher/k3s/k3s.yaml
+
+    - name: Add kubectl bash completion
+      ansible.builtin.shell:
+        /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl.inc
+      args:
+        creates: /etc/bash_completion.d/kubectl.inc
+
+    - name: Get helm installer
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        dest: /tmp/helm.sh
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: Install helm
+      ansible.builtin.command: /tmp/helm.sh
+      args:
+        creates: /usr/local/bin/helm
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+      failed_when: false
+
+    - name: Add helm bash completion
+      ansible.builtin.shell:
+        /usr/local/bin/helm completion bash > /etc/bash_completion.d/helm.inc
+      args:
+        creates: /etc/bash_completion.d/helm.inc
+
+    - name: Add GatewayAPI CRDs
+      kubernetes.core.k8s:
+        state: present
+        src: https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
+        kubeconfig: "{{ kubeconfig }}"
+
+    - name: Get current cilium version
+      ansible.builtin.set_fact:
+        cilium_version: "{{ lookup('ansible.builtin.url', 'https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt') }}"
+
+    - name: Download current cilium version
+      ansible.builtin.unarchive:
+        src: https://github.com/cilium/cilium-cli/releases/download/{{ cilium_version }}/cilium-linux-amd64.tar.gz
+        remote_src: true
+        dest: /usr/local/bin/
+        owner: root
+        group: root
+        mode: "0750"
+        creates: /usr/local/bin/cilium
+
+    - name: Copy cilium values
+      ansible.builtin.template:
+        src: cilium/values.yaml
+        dest: /tmp/values-cilium.yaml
+        owner: root
+        group: root
+        mode: "0640"
+      register: cilium_config
+
+    - name: Install cilium
+      ansible.builtin.shell: /usr/local/bin/cilium install -f /tmp/values-cilium.yaml || /usr/local/bin/cilium upgrade -f /tmp/values-cilium.yaml
+      changed_when: true
+      environment:
+        KUBECONFIG: "{{ kubeconfig }}"
+      when: cilium_config is changed
+
+    - name: Wait till the Object is created
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeconfig }}"
+        kind: Node
+        name: "{{ ansible_fqdn }}"
+        wait: true
+        wait_sleep: 10
+        wait_timeout: 360
+        wait_condition:
+          reason: KubeletReady
+          status: "True"
+          type: Ready
+
+    - name: Add Cilium IP Pool
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'cilium/ip-pool.yaml') | from_yaml }}"
+        kubeconfig: "{{ kubeconfig }}"

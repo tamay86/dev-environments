@@ -1,0 +1,36 @@
+---
+
+- name: Install podman
+  hosts: all
+  remote_user: vagrant
+  become: true
+
+
+  tasks:
+    - name: Get packages
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Install packages
+      ansible.builtin.package:
+        state: present
+        name:
+          - bash-completion
+          - podman
+
+    - name: Configure firewalld
+      when: "'firewalld' in ansible_facts.packages"
+      block:
+      - name: Open http in firewalld
+        ansible.posix.firewalld:
+          state: enabled
+          service: http
+          permanent: true
+          immediate: true
+
+      - name: Open https in firewalld
+        ansible.posix.firewalld:
+          state: enabled
+          service: https
+          permanent: true
+          immediate: true
