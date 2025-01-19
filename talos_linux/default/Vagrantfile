@@ -5,7 +5,7 @@ Vagrant.configure(2) do |config|
       domain.cpus = 2
       domain.uri = 'qemu+unix:///system'
       domain.memory = 2048
-      domain.storage :file, :device => :cdrom, :path => "/home/tamay.mueller/Dokumente/IdeaProjects/k8s/dev-environments/talos_linux/default/talos/metal-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
       domain.storage :file, :size => '10G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -22,7 +22,7 @@ Vagrant.configure(2) do |config|
       domain.cpus = 2
       domain.uri = 'qemu+unix:///system'
       domain.memory = 4096
-      domain.storage :file, :device => :cdrom, :path => "/home/tamay.mueller/Dokumente/IdeaProjects/k8s/dev-environments/talos_linux/default/talos/metal-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
       domain.storage :file, :size => '10G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -31,6 +31,40 @@ Vagrant.configure(2) do |config|
       :ip => "192.168.100.3",
       :libvirt__guest_ipv6 => "yes",
       :libvirt__ipv6_address => "fd00::3",
+      :libvirt__ipv6_prefix => "64"
+  end
+
+  config.vm.define "worker-02" do |vm|
+    vm.vm.provider :libvirt do |domain|
+      domain.cpus = 2
+      domain.uri = 'qemu+unix:///system'
+      domain.memory = 4096
+      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
+      domain.storage :file, :size => '10G', :type => 'raw'
+      domain.boot 'hd'
+      domain.boot 'cdrom'
+    end
+    vm.vm.network :private_network,
+      :ip => "192.168.100.4",
+      :libvirt__guest_ipv6 => "yes",
+      :libvirt__ipv6_address => "fd00::4",
+      :libvirt__ipv6_prefix => "64"
+  end
+
+  config.vm.define "worker-03" do |vm|
+    vm.vm.provider :libvirt do |domain|
+      domain.cpus = 2
+      domain.uri = 'qemu+unix:///system'
+      domain.memory = 4096
+      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
+      domain.storage :file, :size => '10G', :type => 'raw'
+      domain.boot 'hd'
+      domain.boot 'cdrom'
+    end
+    vm.vm.network :private_network,
+      :ip => "192.168.100.5",
+      :libvirt__guest_ipv6 => "yes",
+      :libvirt__ipv6_address => "fd00::5",
       :libvirt__ipv6_prefix => "64"
   end
 

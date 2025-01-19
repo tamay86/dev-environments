@@ -1,0 +1,7 @@
+machine:
+  network:
+    hostname: worker-02
+    interfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: true

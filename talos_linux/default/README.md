@@ -9,10 +9,9 @@ Testumgebung für Vagrant (mit vagrant-libvirt) für Talos bestehend aus einer C
 
 ```shell
 # Download Talos Iso
-mkdir -p talos
-if [[ ! -f talos/metal-amd64.iso ]]
+if [[ ! -f /tmp/metal-amd64.iso ]]
 then
-  wget -q https://github.com/siderolabs/talos/releases/download/v1.9.1/metal-amd64.iso -O talos/metal-amd64.iso
+  wget -q https://github.com/siderolabs/talos/releases/download/v1.9.2/metal-amd64.iso -O /tmp/metal-amd64.iso
 fi
 ```
 
@@ -28,12 +27,18 @@ Daher wird nur NIC2 benötigt, die sowohl IPv4 als auch IPv6 aktiviert hat. Mitt
 ```shell
 # IP und MAC rausfinden
 MAC_CP=$(virsh -c qemu:///system domifaddr --domain default_cp-01 | grep 121 | awk '{ print $2}'); echo $MAC_CP
-MAC_WORKER=$(virsh -c qemu:///system domifaddr --domain default_worker-01 | grep 121 | awk '{ print $2}'); echo $MAC_WORKER
+MAC_WORKER_01=$(virsh -c qemu:///system domifaddr --domain default_worker-01 | grep 121 | awk '{ print $2}'); echo $MAC_WORKER_01
+MAC_WORKER_02=$(virsh -c qemu:///system domifaddr --domain default_worker-02 | grep 121 | awk '{ print $2}'); echo $MAC_WORKER_02
+MAC_WORKER_03=$(virsh -c qemu:///system domifaddr --domain default_worker-03 | grep 121 | awk '{ print $2}'); echo $MAC_WORKER_03
 IP_CP=$(virsh -c qemu:///system domifaddr --domain default_cp-01 | grep 100 | awk '{ print $4 }' | cut -f1 -d'/'); echo $IP_CP
-IP_WORKER=$(virsh -c qemu:///system domifaddr --domain default_worker-01 | grep 100 | awk '{ print $4 }' | cut -f1 -d'/'); echo $IP_WORKER
+IP_WORKER_01=$(virsh -c qemu:///system domifaddr --domain default_worker-01 | grep 100 | awk '{ print $4 }' | cut -f1 -d'/'); echo $IP_WORKER_01
+IP_WORKER_02=$(virsh -c qemu:///system domifaddr --domain default_worker-02 | grep 100 | awk '{ print $4 }' | cut -f1 -d'/'); echo $IP_WORKER_02
+IP_WORKER_03=$(virsh -c qemu:///system domifaddr --domain default_worker-03 | grep 100 | awk '{ print $4 }' | cut -f1 -d'/'); echo $IP_WORKER_03
 # NIC1 entfernen
 virsh -c qemu:///system detach-interface --domain default_cp-01 --mac ${MAC_CP} --type network
-virsh -c qemu:///system detach-interface --domain default_worker-01 --mac ${MAC_WORKER} --type network
+virsh -c qemu:///system detach-interface --domain default_worker-01 --mac ${MAC_WORKER_01} --type network
+virsh -c qemu:///system detach-interface --domain default_worker-02 --mac ${MAC_WORKER_02} --type network
+virsh -c qemu:///system detach-interface --domain default_worker-03 --mac ${MAC_WORKER_03} --type network
 ```
 
 ## Talos
@@ -47,17 +52,25 @@ talosctl gen config dev https://192.168.100.10:6443 \
   --install-disk /dev/vda \
   --config-patch-control-plane @patches/controlplane.yaml
 
-# Apply controlplane config to cp-01, including patch for hostname
+# Apply controlplane config to cp-01
 talosctl -n ${IP_CP} apply-config \
   --insecure \
   --file talos/controlplane.yaml \
-  --config-patch @patches/node-cp-01.yaml
+  --config-patch @patches/nodes/cp-01.yaml
 
-# Apply Config to worker-01, including patch for hostname
-talosctl -n ${IP_WORKER} apply-config \
+# Apply config to workers
+talosctl -n ${IP_WORKER_01} apply-config \
   --insecure \
   --file talos/worker.yaml \
-  --config-patch @patches/node-worker-01.yaml
+  --config-patch @patches/nodes/worker-01.yaml
+talosctl -n ${IP_WORKER_02} apply-config \
+  --insecure \
+  --file talos/worker.yaml \
+  --config-patch @patches/nodes/worker-02.yaml
+talosctl -n ${IP_WORKER_03} apply-config \
+  --insecure \
+  --file talos/worker.yaml \
+  --config-patch @patches/nodes/worker-03.yaml
 
 export TALOSCONFIG=$(realpath ./talos/talosconfig)
 talosctl config endpoint ${IP_CP}
@@ -69,7 +82,7 @@ export KUBECONFIG=./kubeconfig
 ### Quick export
 
 ```shell
-IP_CP=$(virsh -c qemu:///system domifaddr --domain dev-home.tamay.cloud_k8s-node-01 | grep 111 | awk '{ print $4 }' | cut -f1 -d'/')
+IP_CP=$(virsh -c qemu:///system domifaddr --domain default_cp-01 | grep 100 | awk '{ print $4 }' | cut -f1 -d'/'); echo $IP_CP
 export TALOSCONFIG=$(realpath ./talos/talosconfig)
 talosctl config endpoint ${IP_CP}
 export KUBECONFIG=./kubeconfig
