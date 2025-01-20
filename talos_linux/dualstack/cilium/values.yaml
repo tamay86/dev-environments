@@ -1,0 +1,55 @@
+kubeProxyReplacement: "true"
+# needed for Talos
+k8sServiceHost: "localhost"
+k8sServicePort: "7445"
+securityContext:
+  capabilities:
+    ciliumAgent:
+      - CHOWN
+      - KILL
+      - NET_ADMIN
+      - NET_RAW
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+
+externalIPs:
+  enabled: true
+
+ipv4:
+  enabled: true
+ipv6:
+  enabled: true
+
+ipam:
+  mode: kubernetes
+
+# Hubble UI
+hubble:
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+    rollOutPods: true
+
+# Rollout
+rollOutCiliumPods: true
+operator:
+  rollOutPods: true
+  replicas: 1
+
+# Disable envoy
+envoy:
+  enabled: false

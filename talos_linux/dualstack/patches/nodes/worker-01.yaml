@@ -1,0 +1,20 @@
+machine:
+  network:
+    hostname: worker-01
+    interfaces:
+      - deviceSelector:
+          physical: true
+        dhcp: true
+    nameservers:
+      - 1.1.1.1
+  install:
+    disk: /dev/vda
+  kubelet:
+    nodeIP:
+      validSubnets:
+        - fd00::/64
+        - 192.168.100.0/24
+  # features:
+  #   hostDNS:
+  #     enabled: true
+  #     forwardKubeDNSToHost: false
