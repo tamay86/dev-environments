@@ -61,18 +61,17 @@ talosctl -n ${IP_WORKER_01} apply-config \
   --config-patch @patches/nodes/worker-01.yaml
 
 export TALOSCONFIG=$(realpath ./talos/talosconfig)
-talosctl config endpoint ${IP_CP}
-talosctl -n ${IP_CP} bootstrap
-talosctl -n ${IP_CP} kubeconfig ./kubeconfig
+talosctl config endpoint fd00::81
+talosctl -n fd00::81 bootstrap
+talosctl -n fd00::81 kubeconfig ./kubeconfig
 export KUBECONFIG=./kubeconfig
 ```
 
 ### Quick export
 
 ```shell
-IP_CP=$(virsh -c qemu:///system domifaddr --domain dualstack_cp-01 | grep 100 | awk '{ print $4 }' | cut -f1 -d'/'); echo $IP_CP
 export TALOSCONFIG=$(realpath ./talos/talosconfig)
-talosctl config endpoint ${IP_CP}
+talosctl config endpoint fd00::81
 export KUBECONFIG=./kubeconfig
 ```
 
@@ -101,3 +100,8 @@ helm install metallb metallb/metallb --namespace metallb-system
 kubectl apply -f metallb/pool.yaml
 ```
 
+## Adguard
+
+```shell
+kubectl apply -f adguard.yaml
+```

@@ -4,7 +4,12 @@ machine:
     interfaces:
       - deviceSelector:
           physical: true
-        dhcp: true
+        addresses:
+          - 192.168.100.81/24
+          - fd00::81/64
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.100.1
         vip:
           ip: fd00::10
     nameservers:
@@ -16,7 +21,3 @@ machine:
       validSubnets:
         - fd00::/64
         - 192.168.100.0/24
-  # features:
-  #   hostDNS:
-  #     enabled: true
-  #     forwardKubeDNSToHost: false

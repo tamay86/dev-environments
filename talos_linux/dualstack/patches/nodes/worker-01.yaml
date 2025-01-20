@@ -4,7 +4,12 @@ machine:
     interfaces:
       - deviceSelector:
           physical: true
-        dhcp: true
+        addresses:
+          - 192.168.100.82/24
+          - fd00::82/64
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.100.1
     nameservers:
       - 1.1.1.1
   install:

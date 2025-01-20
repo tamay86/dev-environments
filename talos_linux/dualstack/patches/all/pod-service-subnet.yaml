@@ -1,14 +1,14 @@
 cluster:
   network:
     podSubnets:
-      - fd00:0:0:0:1::/96
+      - fd00:10:244::/96
       - 10.244.0.0/16
     serviceSubnets:
-      - fd00:0:0:0:1::/112
+      - fd00:10:96::/112
       - 10.96.0.0/16
   apiServer:
     certSANs:
-      - home.tamay.cloud
+      - tamay.cloud
       - ::1
     extraArgs:
       bind-address: "::"
