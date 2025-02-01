@@ -11,7 +11,7 @@ Testumgebung für Vagrant (mit vagrant-libvirt) für Talos bestehend aus einer C
 # Download Talos Iso
 if [[ ! -f /tmp/metal-amd64.iso ]]
 then
-  wget -q https://github.com/siderolabs/talos/releases/download/v1.9.2/metal-amd64.iso -O /tmp/metal-amd64.iso
+  wget -q https://github.com/siderolabs/talos/releases/download/v1.9.3/metal-amd64.iso -O /tmp/metal-amd64.iso
 fi
 ```
 
