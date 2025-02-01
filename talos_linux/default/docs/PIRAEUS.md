@@ -12,7 +12,8 @@
 
 ## Talos
 
-Abweichende Erzeugung der Konfiguration
+Abweichende Erzeugung der Konfiguration.
+Benötigt Patch für drbd. Siehe <https://piraeus.io/docs/stable/how-to/talos/>
 
 ```shell
 # Generate talos config
